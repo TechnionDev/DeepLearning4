@@ -26,15 +26,20 @@ class PolicyNet(nn.Module):
         """
         super().__init__()
 
-        # TODO: Implement a simple neural net to approximate the policy.
-        # ====== YOUR CODE: ======
-        raise NotImplementedError()
-        # ========================
+        self.layers = [
+            nn.Linear(in_features=in_features, out_features=32, bias=True),
+            nn.ReLU(),
+            nn.Linear(in_features=32, out_features=16, bias=True),
+            nn.ReLU(),
+            # nn.AvgPool1d(kernel_size=5, stride=None, padding=4),
+            nn.Linear(in_features=16, out_features=out_actions, bias=True)
+        ]
+        self.layers = nn.Sequential(*self.layers)
 
     def forward(self, x):
         # TODO: Implement a simple neural net to approximate the policy.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        action_scores = self.layers(x)
         # ========================
         return action_scores
 
@@ -49,7 +54,8 @@ class PolicyNet(nn.Module):
         """
         # TODO: Implement according to docstring.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # print(env.__dict__)
+        net = PolicyNet(in_features=env.observation_space.shape[0], out_actions=env.action_space.n)
         # ========================
         return net.to(device)
 
@@ -87,7 +93,8 @@ class PolicyAgent(object):
         #  Generate the distribution as described above.
         #  Notice that you should use p_net for *inference* only.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        action_state = self.p_net(self.curr_state)
+        actions_proba = torch.softmax(action_state, dim=-1)
         # ========================
 
         return actions_proba
@@ -108,8 +115,11 @@ class PolicyAgent(object):
         #  - Update agent state.
         #  - Generate and return a new experience.
         # ====== YOUR CODE: ======
-
-        raise NotImplementedError()
+        action_proba = self.current_action_distribution()
+        action_sample = torch.bernoulli(action_proba)
+        action = torch.argmax(action_sample, dim=-1).item()
+        state, reward, is_done, _ = self.env.step(action)
+        experience = Experience(action=action, state=state, reward=reward, is_done=is_done)
 
         # ========================
         if is_done:
@@ -118,7 +128,7 @@ class PolicyAgent(object):
 
     @classmethod
     def monitor_episode(
-        cls, env_name, p_net, monitor_dir="checkpoints/monitor", device="cpu"
+            cls, env_name, p_net, monitor_dir="checkpoints/monitor", device="cpu"
     ):
         """
         Runs a single episode with a Monitor using an specified policy network.
@@ -136,7 +146,14 @@ class PolicyAgent(object):
             #  Create an agent and play the environment for one episode
             #  based on the policy encoded in p_net.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            is_done = False
+            agent = PolicyAgent(env, p_net)
+            while not is_done:
+                exp = agent.step()
+                is_done = exp.is_done
+                n_steps += 1
+                reward += exp.reward
+                agent.curr_state = torch.Tensor(exp.state)
             # ========================
         return env, n_steps, reward
 
@@ -158,7 +175,8 @@ class VanillaPolicyGradientLoss(nn.Module):
         #  Use the helper methods in this class to first calculate the weights
         #  and then the loss using the weights and action scores.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        weight_p = self._policy_weight(batch=batch)
+        loss_p = self._policy_loss(batch=batch, action_scores=action_scores, policy_weight=weight_p)
         # ========================
         return loss_p, dict(loss_p=loss_p.item())
 
@@ -167,7 +185,7 @@ class VanillaPolicyGradientLoss(nn.Module):
         #  Return the policy weight term for the causal vanilla PG loss.
         #  This is a tensor of shape (N,).
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        policy_weight = batch.q_vals
         # ========================
         return policy_weight
 
@@ -182,7 +200,9 @@ class VanillaPolicyGradientLoss(nn.Module):
         #   different episodes. So, here we'll simply average over the number
         #   of total experiences in our batch.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        log_probabilities = nn.functional.log_softmax(action_scores, dim=-1)
+        selected_prob = torch.gather(log_probabilities, dim=0, index=batch.actions.unsqueeze(dim=-1)).squeeze()
+        loss_p = -torch.mean(policy_weight * selected_prob)
         # ========================
         return loss_p
 
@@ -200,7 +220,8 @@ class BaselinePolicyGradientLoss(VanillaPolicyGradientLoss):
         #  Calculate the loss and baseline.
         #  Use the helper methods in this class as before.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        weight_p,baseline = self._policy_weight(batch=batch)
+        loss_p = self._policy_loss(batch=batch, action_scores=action_scores, policy_weight=weight_p-baseline)
         # ========================
         return loss_p, dict(loss_p=loss_p.item(), baseline=baseline.item())
 
@@ -209,7 +230,8 @@ class BaselinePolicyGradientLoss(VanillaPolicyGradientLoss):
         #  Calculate both the policy weight term and the baseline value for
         #  the PG loss with baseline.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        policy_weight = batch.q_vals
+        baseline = policy_weight.mean()
         # ========================
         return policy_weight, baseline
 
@@ -268,12 +290,12 @@ class ActionEntropyLoss(nn.Module):
 
 class PolicyTrainer(object):
     def __init__(
-        self,
-        model: nn.Module,
-        optimizer: optim.Optimizer,
-        loss: Union[Iterable[nn.Module], nn.Module],
-        dataloader: DataLoader,
-        checkpoint_file=None,
+            self,
+            model: nn.Module,
+            optimizer: optim.Optimizer,
+            loss: Union[Iterable[nn.Module], nn.Module],
+            dataloader: DataLoader,
+            checkpoint_file=None,
     ):
         self.model = model
         self.optimizer = optimizer
@@ -320,11 +342,11 @@ class PolicyTrainer(object):
             self._training_data[name] = loss_list
 
     def train(
-        self,
-        target_reward: float = math.inf,
-        running_mean_len=100,
-        max_episodes=10_000,
-        post_batch_fn: Callable = None,
+            self,
+            target_reward: float = math.inf,
+            running_mean_len=100,
+            max_episodes=10_000,
+            post_batch_fn: Callable = None,
     ):
         """
         Trains a policy-based RL model.

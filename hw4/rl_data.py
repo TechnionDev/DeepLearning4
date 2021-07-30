@@ -1,7 +1,7 @@
 import torch
 import torch.utils.data
 from typing import List, Tuple, Union, Callable, Iterable, Iterator, NamedTuple
-
+import numpy as np
 
 class Experience(NamedTuple):
     """
@@ -39,7 +39,13 @@ class Episode(object):
         #  Try to implement it in O(n) runtime, where n is the number of
         #  states. Hint: change the order.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        # TODO: Make into O(n) solution
+        for i, exp in enumerate(self.experiences):
+            cur_qval = 0
+            for j in range(len(self.experiences) - i):
+                cur_qval += (gamma ** j) * self.experiences[j + i].reward
+            qvals.append(cur_qval)
+        # qvals = list(reversed(qvals))
         # ========================
         return qvals
 
@@ -56,13 +62,12 @@ class TrainBatch(object):
     """
 
     def __init__(
-        self,
-        states: torch.FloatTensor,
-        actions: torch.LongTensor,
-        q_vals: torch.FloatTensor,
-        total_rewards: torch.FloatTensor,
+            self,
+            states: torch.FloatTensor,
+            actions: torch.LongTensor,
+            q_vals: torch.FloatTensor,
+            total_rewards: torch.FloatTensor,
     ):
-
         assert states.shape[0] == actions.shape[0] == q_vals.shape[0]
 
         self.states = states
@@ -88,7 +93,18 @@ class TrainBatch(object):
         #   - Calculate the q-values for states in each experience.
         #   - Construct a TrainBatch instance.
         # ====== YOUR CODE: ======
-        raise NotImplementedError()
+        qvals = []
+        states = []
+        actions = []
+        total_rewards = []
+        for episode in episodes:
+            qvals = qvals + episode.calc_qvals(gamma)
+            states = states + [experience.state for experience in episode.experiences]
+            actions = actions + [experience.action for experience in episode.experiences]
+            total_rewards.append(episode.total_reward)
+        # states = np.concatenate(states)
+        train_batch = TrainBatch(states=torch.FloatTensor(states), actions=torch.LongTensor(actions),
+                                 q_vals=torch.FloatTensor(qvals), total_rewards=torch.FloatTensor(total_rewards))
         # ========================
         return train_batch
 
@@ -139,6 +155,8 @@ class TrainBatchDataset(torch.utils.data.IterableDataset):
 
         agent = self.agent_fn()
         agent.reset()
+        # print(agent.__dict__)
+        # return env, n_steps, reward
 
         while True:
             # TODO:
@@ -147,7 +165,16 @@ class TrainBatchDataset(torch.utils.data.IterableDataset):
             #    by the agent.
             #  - Store Episodes in the curr_batch list.
             # ====== YOUR CODE: ======
-            raise NotImplementedError()
+            is_done = False
+            experiences = []
+            total_reward = 0
+            while not is_done:
+                exp = agent.step()
+                experiences.append(exp)
+                is_done = exp.is_done
+                total_reward += exp.reward
+                agent.curr_state = torch.Tensor(exp.state)
+            curr_batch.append(Episode(total_reward=total_reward, experiences=experiences))
             # ========================
             if len(curr_batch) == self.episode_batch_size:
                 yield tuple(curr_batch)
