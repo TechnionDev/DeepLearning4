@@ -93,8 +93,13 @@ class PolicyAgent(object):
         #  Generate the distribution as described above.
         #  Notice that you should use p_net for *inference* only.
         # ====== YOUR CODE: ======
-        action_state = self.p_net(self.curr_state)
-        actions_proba = torch.softmax(action_state, dim=-1)
+        state = self.curr_state.unsqueeze(0)
+        with torch.no_grad():
+            p_net_result = self.p_net(state)
+            if len(p_net_result) > 1:
+                p_net_result = p_net_result[0]
+
+            actions_proba = torch.nn.functional.softmax(p_net_result, dim=-1).squeeze()
         # ========================
 
         return actions_proba
@@ -115,11 +120,13 @@ class PolicyAgent(object):
         #  - Update agent state.
         #  - Generate and return a new experience.
         # ====== YOUR CODE: ======
-        action_proba = self.current_action_distribution()
-        action_sample = torch.bernoulli(action_proba)
-        action = torch.argmax(action_sample, dim=-1).item()
-        state, reward, is_done, _ = self.env.step(action)
-        experience = Experience(action=action, state=state, reward=reward, is_done=is_done)
+        with torch.no_grad():
+            state = self.curr_state
+            action_proba = self.current_action_distribution()
+            action = torch.multinomial(action_proba, 1).item()
+            new_state, reward, is_done, _ = self.env.step(action)
+            self.curr_state = torch.from_numpy(new_state).float()
+            experience = Experience(action=action, state=state, reward=reward, is_done=is_done)
 
         # ========================
         if is_done:
@@ -146,14 +153,15 @@ class PolicyAgent(object):
             #  Create an agent and play the environment for one episode
             #  based on the policy encoded in p_net.
             # ====== YOUR CODE: ======
+            agent = PolicyAgent(env, p_net, device)
             is_done = False
-            agent = PolicyAgent(env, p_net)
+            reward = 0
+            n_steps = 0
             while not is_done:
-                exp = agent.step()
-                is_done = exp.is_done
                 n_steps += 1
-                reward += exp.reward
-                agent.curr_state = torch.Tensor(exp.state)
+                _, _, current_reward, is_done = agent.step()
+                reward += current_reward
+                env.render()
             # ========================
         return env, n_steps, reward
 
@@ -201,7 +209,7 @@ class VanillaPolicyGradientLoss(nn.Module):
         #   of total experiences in our batch.
         # ====== YOUR CODE: ======
         log_probabilities = nn.functional.log_softmax(action_scores, dim=-1)
-        selected_prob = torch.gather(log_probabilities, dim=0, index=batch.actions.unsqueeze(dim=-1)).squeeze()
+        selected_prob = torch.gather(log_probabilities, dim=1, index=batch.actions.unsqueeze(dim=-1)).squeeze()
         loss_p = -torch.mean(policy_weight * selected_prob)
         # ========================
         return loss_p
@@ -220,8 +228,8 @@ class BaselinePolicyGradientLoss(VanillaPolicyGradientLoss):
         #  Calculate the loss and baseline.
         #  Use the helper methods in this class as before.
         # ====== YOUR CODE: ======
-        weight_p,baseline = self._policy_weight(batch=batch)
-        loss_p = self._policy_loss(batch=batch, action_scores=action_scores, policy_weight=weight_p-baseline)
+        weight_p, baseline = self._policy_weight(batch=batch)
+        loss_p = self._policy_loss(batch=batch, action_scores=action_scores, policy_weight=weight_p - baseline)
         # ========================
         return loss_p, dict(loss_p=loss_p.item(), baseline=baseline.item())
 

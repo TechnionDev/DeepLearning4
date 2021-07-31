@@ -102,8 +102,10 @@ class TrainBatch(object):
             states = states + [experience.state for experience in episode.experiences]
             actions = actions + [experience.action for experience in episode.experiences]
             total_rewards.append(episode.total_reward)
-        # states = np.concatenate(states)
-        train_batch = TrainBatch(states=torch.FloatTensor(states), actions=torch.LongTensor(actions),
+        actions = torch.LongTensor(actions)
+        states = torch.stack(states)
+
+        train_batch = cls(states=states.float(), actions=actions,
                                  q_vals=torch.FloatTensor(qvals), total_rewards=torch.FloatTensor(total_rewards))
         # ========================
         return train_batch
@@ -173,7 +175,6 @@ class TrainBatchDataset(torch.utils.data.IterableDataset):
                 experiences.append(exp)
                 is_done = exp.is_done
                 total_reward += exp.reward
-                agent.curr_state = torch.Tensor(exp.state)
             curr_batch.append(Episode(total_reward=total_reward, experiences=experiences))
             # ========================
             if len(curr_batch) == self.episode_batch_size:
