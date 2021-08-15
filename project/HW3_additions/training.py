@@ -208,8 +208,11 @@ class Trainer(abc.ABC):
         pbar_name = forward_fn.__name__
         with tqdm.tqdm(desc=pbar_name, total=num_batches, file=pbar_file) as pbar:
             dl_iter = iter(dl)
+            total_count = 0
             for batch_idx in range(num_batches):
                 data = next(dl_iter)
+                x,y = data
+                total_count += len(y)
                 batch_res = forward_fn(data)
 
                 pbar.set_description(f"{pbar_name} ({batch_res.loss:.3f})")
@@ -219,7 +222,7 @@ class Trainer(abc.ABC):
                 num_correct += batch_res.num_correct
 
             avg_loss = sum(losses) / num_batches
-            accuracy = 100.0 * num_correct
+            accuracy = 100.0 * num_correct / total_count
             pbar.set_description(
                 f"{pbar_name} "
                 f"(Avg. Loss {avg_loss:.3f}, "
@@ -266,6 +269,7 @@ class LSTMTrainer(Trainer):
         loss.backward()
         self.optimizer.step()
         num_correct = (pred.to(device=self.device) == y).sum()
+        # print(f"total correct is {num_correct} vs total which is {len(y)}")
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len

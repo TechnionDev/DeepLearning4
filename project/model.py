@@ -28,11 +28,11 @@ class SimplePredictionModel(nn.Module):
 
         out = out[:, -1, :]
         out = out.view(out.shape[0], -1)
-        out = torch.softmax(self.output_layer(out), dim=-1)
+        out = torch.log_softmax(self.output_layer(out), dim=-1)
         return out, hidden_state
 
 
-def load_data(embedding, word_dict):
+def load_data():
     # torchtext Field objects parse text (e.g. a review) and create a tensor representation
 
     # This Field object will be used for tokenizing the movie reviews text
@@ -54,5 +54,5 @@ def load_data(embedding, word_dict):
     )
     review_parser.build_vocab(ds_train, vectors="glove.6B.100d")
     label_parser.build_vocab(ds_train)
-
-    return ds_train, ds_valid, ds_test
+    # print(f"review parser dict is {review_parser.vocab.vectors}")
+    return ds_train, ds_valid, ds_test,review_parser.vocab.vectors
