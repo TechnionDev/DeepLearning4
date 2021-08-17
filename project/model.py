@@ -12,23 +12,31 @@ class SimplePredictionModel(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True,device='cpu'):
         super().__init__()
         self.embedding = embedding
+        self.num_layers = num_layers
+
         self.lstm_net = torch.nn.LSTM(input_size=embedding_dim, hidden_size=hidden_dim,
                                       num_layers=num_layers, bidirectional=bidirectional)
         output_dim = hidden_dim * 2 if bidirectional else hidden_dim
-        self.output_layer = nn.Linear(output_dim, 3, bias=True)
+        self.output_layer = nn.Linear(output_dim, 3, bias=False)
+        self.log_softmax = nn.LogSoftmax(dim=1)
         self.device = device
         # self.hidden = None
 
     def forward(self, x, hidden_state=None):
+#         print(x)
         x_embedded = self.embedding(x).to(device=self.device)
+        x_embedded = x_embedded.transpose(0, 1)
+        # print(x_embedded.shape)
+        # return False
+        # print(x_embedded.shape)
         if hidden_state is None:
             out, hidden_state = self.lstm_net(x_embedded)
         else:
             out, hidden_state = self.lstm_net(x_embedded, hidden_state)
-
-        out = out[:, -1, :]
+#         print(f"shape of out is {out.shape}, shape of hidden is {hidden_state[0].shape}")
+        out = out[-1, :, :]
         out = out.view(out.shape[0], -1)
-        out = torch.log_softmax(self.output_layer(out), dim=-1)
+        out = self.log_softmax(self.output_layer(out))
         return out, hidden_state
 
 

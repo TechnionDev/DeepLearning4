@@ -262,8 +262,9 @@ class LSTMTrainer(Trainer):
         #  - Update params
         #  - Calculate number of correct char predictions
         # ====== YOUR CODE: ======
-        self.optimizer.zero_grad()
         output, _ = self.model(x)
+        self.model.zero_grad()
+#         print(self.optimizer)
         loss = self.loss_fn(output, y)
         pred = torch.argmax(output, dim=-1)
         loss.backward()
