@@ -9,7 +9,7 @@ import torchtext.datasets
 
 
 class SimplePredictionModel(nn.Module):
-    def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True,device='cpu'):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True, device='cpu'):
         super().__init__()
         self.embedding = embedding
         self.num_layers = num_layers
@@ -23,7 +23,7 @@ class SimplePredictionModel(nn.Module):
         # self.hidden = None
 
     def forward(self, x, hidden_state=None):
-#         print(x)
+        #         print(x)
         x_embedded = self.embedding(x).to(device=self.device)
         x_embedded = x_embedded.transpose(0, 1)
         # print(x_embedded.shape)
@@ -33,7 +33,7 @@ class SimplePredictionModel(nn.Module):
             out, hidden_state = self.lstm_net(x_embedded)
         else:
             out, hidden_state = self.lstm_net(x_embedded, hidden_state)
-#         print(f"shape of out is {out.shape}, shape of hidden is {hidden_state[0].shape}")
+        #         print(f"shape of out is {out.shape}, shape of hidden is {hidden_state[0].shape}")
         out = out[-1, :, :]
         out = out.view(out.shape[0], -1)
         out = self.log_softmax(self.output_layer(out))
@@ -63,4 +63,4 @@ def load_data():
     review_parser.build_vocab(ds_train, vectors="glove.6B.100d")
     label_parser.build_vocab(ds_train)
     # print(f"review parser dict is {review_parser.vocab.vectors}")
-    return ds_train, ds_valid, ds_test,review_parser.vocab.vectors
+    return ds_train, ds_valid, ds_test, review_parser.vocab.vectors
