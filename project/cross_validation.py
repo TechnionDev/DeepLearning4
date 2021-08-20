@@ -10,12 +10,16 @@ import torch.nn as nn
 import project.model as model
 import project.glove_parser as glove
 import numpy as np
+from project.config import lstm_hyper_params
+
 
 
 def get_trainer_mnist(model_trainer, ds_train, ds_valid, ds_test, embedding_tensor):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    def train_mnist(config):
+    def train(config):
+        config.update(lstm_hyper_params)
+        print(f'Config is: {config}')
         embedding = nn.Embedding.from_pretrained(embedding_tensor)
         learning_model = model.SimplePredictionModel(embedding_dim=embedding.embedding_dim,
                                                      hidden_dim=config['hidden_dim'],
@@ -32,7 +36,7 @@ def get_trainer_mnist(model_trainer, ds_train, ds_valid, ds_test, embedding_tens
 
         optimizer = optim.Adam(learning_model.parameters(), lr=config['lr'])
         scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer, mode=config['mode'], factor=config['factor'], patience=config['patience'], verbose=True
+            optimizer, mode='max', factor=config['factor'], patience=config['patience'], verbose=True
         )
 
         trainer = model(learning_model, loss, optimizer, device)
@@ -46,20 +50,16 @@ def get_trainer_mnist(model_trainer, ds_train, ds_valid, ds_test, embedding_tens
                 accuracy = np.mean(epoch_result.accuracy)
                 print(f'\nEpoch #{epoch + 1}: Avg. loss = {avg_loss:.3f}, Accuracy = {accuracy:.2f}%')
 
-    return train_mnist
+    return train
 
 
 def cross_validate():
-    from project import config
     ds_train, ds_valid, ds_test, embedding_tensor = model.load_data()
 
     analysis = tune.run(get_trainer_mnist(LSTMTrainer, ds_train, ds_valid, ds_test, embedding_tensor),
-                        config=config.lstm_hyper_params)
+                        config={'lr': tune.grid_search([0.001, 0.01, 0.1])})
 
     print("Best config: ", analysis.get_best_config(metric="mean_accuracy"))
 
     # Get a dataframe for analyzing trial results.
     return analysis.dataframe()
-
-
-cross_validate()
