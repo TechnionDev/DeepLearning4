@@ -267,7 +267,8 @@ class LSTMTrainer(Trainer):
 #         print(self.optimizer)
         loss = self.loss_fn(output, y)
         pred = torch.argmax(output, dim=-1)
-        loss.backward()
+        back = loss.backward()
+#         print(f"backprop is {back}")
         self.optimizer.step()
         num_correct = (pred.to(device=self.device) == y).sum()
         # print(f"total correct is {num_correct} vs total which is {len(y)}")
@@ -290,6 +291,72 @@ class LSTMTrainer(Trainer):
             #  - Calculate number of correct predictions
             # ====== YOUR CODE: ======
             output, _ = self.model(x)
+            loss = self.loss_fn(output, y)
+            pred = torch.argmax(output, dim=-1).to(device=self.device)
+            num_correct = (pred == y).sum()
+        # ========================
+
+        return BatchResult(loss.item(), num_correct.item())
+
+class AttentionTrainer(Trainer):
+    def __init__(self, model, loss_fn, optimizer, device=None):
+        super().__init__(model, loss_fn, optimizer, device)
+
+    def train_epoch(self, dl_train: DataLoader, **kw):
+        # TODO: Implement modifications to the base method, if needed.
+        # ====== YOUR CODE: ======
+        # set train mode
+        # ========================
+        return super().train_epoch(dl_train, **kw)
+
+    def test_epoch(self, dl_test: DataLoader, **kw):
+        # TODO: Implement modifications to the base method, if needed.
+        # ====== YOUR CODE: ======
+        # ========================
+        return super().test_epoch(dl_test, **kw)
+
+    def train_batch(self, batch) -> BatchResult:
+        x, y = batch
+        x = x.to(self.device, dtype=torch.long).t()  # (B,S,V)
+        y = y.to(self.device, dtype=torch.long)  # (B,S)
+
+        # TODO:
+        #  Train the RNN model on one batch of data.
+        #  - Forward pass
+        #  - Calculate total loss over sequence
+        #  - Backward pass: truncated back-propagation through time
+        #  - Update params
+        #  - Calculate number of correct char predictions
+        # ====== YOUR CODE: ======
+        output = self.model(x)
+        self.model.zero_grad()
+#         print(self.optimizer)
+        loss = self.loss_fn(output, y)
+        pred = torch.argmax(output, dim=-1)
+        back = loss.backward()
+#         print(f"backprop is {back}")
+        self.optimizer.step()
+        num_correct = (pred.to(device=self.device) == y).sum()
+        # print(f"total correct is {num_correct} vs total which is {len(y)}")
+        # ========================
+
+        # Note: scaling num_correct by seq_len because each sample has seq_len
+        # different predictions.
+        return BatchResult(loss.item(), num_correct.item())
+
+    def test_batch(self, batch) -> BatchResult:
+        x, y = batch
+        x = x.to(self.device, dtype=torch.long).t()  # (B,S,V)
+        y = y.to(self.device, dtype=torch.long)  # (B,S)
+
+        with torch.no_grad():
+            # TODO:
+            #  Evaluate the RNN model on one batch of data.
+            #  - Forward pass
+            #  - Loss calculation
+            #  - Calculate number of correct predictions
+            # ====== YOUR CODE: ======
+            output = self.model(x)
             loss = self.loss_fn(output, y)
             pred = torch.argmax(output, dim=-1).to(device=self.device)
             num_correct = (pred == y).sum()
