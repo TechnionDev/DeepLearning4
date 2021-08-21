@@ -9,18 +9,17 @@ import torchtext.datasets
 
 
 class SimplePredictionModel(nn.Module):
-    def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True, device='cpu'):
+    def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True, device='cpu', dropout=0.1):
         super().__init__()
         self.embedding = embedding
         self.num_layers = num_layers
 
         self.lstm_net = torch.nn.LSTM(batch_first=True, input_size=embedding_dim, hidden_size=hidden_dim,
-                                      num_layers=num_layers, bidirectional=bidirectional)
+                                      num_layers=num_layers, bidirectional=bidirectional, dropout=dropout)
         output_dim = hidden_dim * 2 if bidirectional else hidden_dim
         self.output_layer = nn.Linear(output_dim, 3, bias=False)
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.device = device
-        # self.hidden = None
 
     def forward(self, x, hidden_state=None):
         #         print(x)
@@ -55,9 +54,9 @@ def load_data():
     # Load SST, tokenize the samples and labels
     # ds_X are Dataset objects which will use the parsers to return tensors
     ds_train, ds_valid, ds_test = torchtext.datasets.SST.splits(
-        review_parser, label_parser, root="project/data",fine_grained=True
+        review_parser, label_parser, root="project/data", fine_grained=True
     )
-    review_parser.build_vocab(ds_train, vectors="glove.6B.100d")
+    review_parser.build_vocab(ds_train, vectors="glove.6B.200d")
     label_parser.build_vocab(ds_train)
     # print(f"review parser dict is {review_parser.vocab.vectors}")
     return ds_train, ds_valid, ds_test, review_parser.vocab.vectors
