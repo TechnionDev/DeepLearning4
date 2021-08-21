@@ -12,7 +12,7 @@ class AttentionModel(nn.Module):
     def __init__(self, embedding, embedding_dim, output_dim=3):
         super(AttentionModel, self).__init__()
         self.embedding = embedding
-        self.pos_enc = attention.PositionalEncoding(embedding_dim,dropout=0.4)
+        self.pos_enc = attention.PositionalEncoding(embedding_dim, dropout=0.4)
         # self.attn1 = nn.MultiheadAttention(embedding_dim, 1)
         # self.attn2 = nn.MultiheadAttention(embedding_dim, 1)
         # self.attn3 = nn.MultiheadAttention(embedding_dim, 1)

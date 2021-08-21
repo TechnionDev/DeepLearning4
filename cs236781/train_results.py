@@ -33,3 +33,7 @@ class FitResult(NamedTuple):
     train_acc: List[float]
     test_loss: List[float]
     test_acc: List[float]
+    max_train_acc: List[float]
+    min_train_loss: List[float]
+    max_test_acc: List[float]
+    min_test_loss: List[float]

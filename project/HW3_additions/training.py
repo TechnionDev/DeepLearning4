@@ -79,6 +79,11 @@ class Trainer(abc.ABC):
                 )
                 self.model.load_state_dict(saved_state["model_state"])
 
+        min_train_loss = 99999
+        max_train_acc = 0
+        min_test_loss = 99999
+        max_test_acc = 0
+
         for epoch in range(num_epochs):
             save_checkpoint = False
             verbose = False  # pass this to train/test_epoch.
@@ -100,6 +105,11 @@ class Trainer(abc.ABC):
             test_result = self.test_epoch(dl_test, verbose=verbose, **kw)
             test_loss += test_result.losses
             test_acc += [test_result.accuracy]
+
+            max_train_acc = max(max_train_acc, train_acc)
+            min_train_loss = min(min_train_loss, train_loss)
+            max_test_acc = max(max_test_acc, test_acc)
+            min_test_loss = min(min_test_loss, test_loss)
 
             if best_acc is None or best_acc < test_result.accuracy:
                 best_acc = test_result.accuracy
@@ -128,7 +138,7 @@ class Trainer(abc.ABC):
             if post_epoch_fn:
                 post_epoch_fn(epoch, train_result, test_result, verbose)
 
-        return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc)
+        return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc, max_train_acc, min_train_loss, max_test_acc, min_test_loss)
 
     def train_epoch(self, dl_train: DataLoader, **kw) -> EpochResult:
         """
@@ -211,7 +221,7 @@ class Trainer(abc.ABC):
             total_count = 0
             for batch_idx in range(num_batches):
                 data = next(dl_iter)
-                x,y = data
+                x, y = data
                 total_count += len(y)
                 batch_res = forward_fn(data)
 
@@ -264,11 +274,11 @@ class LSTMTrainer(Trainer):
         # ====== YOUR CODE: ======
         output, _ = self.model(x)
         self.model.zero_grad()
-#         print(self.optimizer)
+        #         print(self.optimizer)
         loss = self.loss_fn(output, y)
         pred = torch.argmax(output, dim=-1)
         back = loss.backward()
-#         print(f"backprop is {back}")
+        #         print(f"backprop is {back}")
         self.optimizer.step()
         num_correct = (pred.to(device=self.device) == y).sum()
         # print(f"total correct is {num_correct} vs total which is {len(y)}")
@@ -297,6 +307,7 @@ class LSTMTrainer(Trainer):
         # ========================
 
         return BatchResult(loss.item(), num_correct.item())
+
 
 class AttentionTrainer(Trainer):
     def __init__(self, model, loss_fn, optimizer, device=None):
@@ -330,11 +341,11 @@ class AttentionTrainer(Trainer):
         # ====== YOUR CODE: ======
         output = self.model(x)
         self.model.zero_grad()
-#         print(self.optimizer)
+        #         print(self.optimizer)
         loss = self.loss_fn(output, y)
         pred = torch.argmax(output, dim=-1)
         back = loss.backward()
-#         print(f"backprop is {back}")
+        #         print(f"backprop is {back}")
         self.optimizer.step()
         num_correct = (pred.to(device=self.device) == y).sum()
         # print(f"total correct is {num_correct} vs total which is {len(y)}")
