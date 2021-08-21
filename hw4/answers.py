@@ -17,11 +17,10 @@ def part1_pg_hyperparams():
     # TODO: Tweak the hyperparameters if needed.
     #  You can also add new ones if you need them for your model's __init__.
     # ====== YOUR CODE: ======
-    hp['batch_size'] = 8
+    hp['batch_size'] = 16
     hp['gamma'] = 0.99
-    hp['beta'] = 0.7
-    hp['delta'] = 1.0
-    hp['learn_rate'] = 1e-2
+    hp['beta'] = 0.5
+    hp['learn_rate'] = 1e-3
     hp['eps'] = 1e-8
     hp['num_workers'] = 1
     # ========================

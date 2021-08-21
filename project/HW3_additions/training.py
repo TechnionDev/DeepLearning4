@@ -6,9 +6,9 @@ import torch
 from typing import Any, Callable
 from pathlib import Path
 from torch.utils.data import DataLoader
-
+import numpy as np
 from cs236781.train_results import FitResult, BatchResult, EpochResult
-
+from sklearn.metrics import confusion_matrix
 
 class Trainer(abc.ABC):
     """
@@ -61,7 +61,7 @@ class Trainer(abc.ABC):
         :return: A FitResult object containing train and test losses per epoch.
         """
         actual_num_epochs = 0
-        train_loss, train_acc, test_loss, test_acc = [], [], [], []
+        train_loss, train_acc, test_loss, test_acc,train_predictions,test_predictions ,test_labels= [], [], [], [], [], [], []
         print(f"device is {self.device}")
         best_acc = None
         epochs_without_improvement = 0
@@ -111,6 +111,8 @@ class Trainer(abc.ABC):
             max_test_acc = max(max_test_acc, test_acc)
             min_test_loss = min(min_test_loss, test_loss)
 
+            mat = confusion_matrix(test_result.results,test_result.predictions)
+            print(mat)
             if best_acc is None or best_acc < test_result.accuracy:
                 best_acc = test_result.accuracy
                 epochs_without_improvement = 0
@@ -137,7 +139,7 @@ class Trainer(abc.ABC):
 
             if post_epoch_fn:
                 post_epoch_fn(epoch, train_result, test_result, verbose)
-
+    
         return FitResult(actual_num_epochs, train_loss, train_acc, test_loss, test_acc, max_train_acc, min_train_loss, max_test_acc, min_test_loss)
 
     def train_epoch(self, dl_train: DataLoader, **kw) -> EpochResult:
@@ -203,6 +205,8 @@ class Trainer(abc.ABC):
         dataloader, and prints progress along the way.
         """
         losses = []
+        predictions = []
+        results = []
         num_correct = 0
         num_batches = len(dl)
 
@@ -224,10 +228,15 @@ class Trainer(abc.ABC):
                 x, y = data
                 total_count += len(y)
                 batch_res = forward_fn(data)
-
+                
                 pbar.set_description(f"{pbar_name} ({batch_res.loss:.3f})")
                 pbar.update()
-
+#                 print(f"predictions is {batch_res.predictions}")
+#                 print(batch_res.predictions)
+                if(batch_res.predictions is not None):
+                    predictions+=list(batch_res.predictions)
+                    results+=list(batch_res.results)
+#                 print(f"labels are {results}")
                 losses.append(batch_res.loss)
                 num_correct += batch_res.num_correct
 
@@ -239,7 +248,7 @@ class Trainer(abc.ABC):
                 f"Accuracy {accuracy:.1f})"
             )
 
-        return EpochResult(losses=losses, accuracy=accuracy)
+        return EpochResult(losses=losses, accuracy=accuracy,predictions = predictions,results=results)
 
 
 class LSTMTrainer(Trainer):
@@ -286,7 +295,7 @@ class LSTMTrainer(Trainer):
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
         # different predictions.
-        return BatchResult(loss.item(), num_correct.item())
+        return BatchResult(loss.item(), num_correct.item(),None,None)
 
     def test_batch(self, batch) -> BatchResult:
         x, y = batch
@@ -304,9 +313,11 @@ class LSTMTrainer(Trainer):
             loss = self.loss_fn(output, y)
             pred = torch.argmax(output, dim=-1).to(device=self.device)
             num_correct = (pred == y).sum()
+            pred_cpu = pred.cpu().detach().numpy()
+            actual_res = y.cpu().detach().numpy()
         # ========================
 
-        return BatchResult(loss.item(), num_correct.item())
+        return BatchResult(loss.item(), num_correct.item(),pred_cpu,actual_res)
 
 
 class AttentionTrainer(Trainer):
@@ -348,12 +359,15 @@ class AttentionTrainer(Trainer):
         #         print(f"backprop is {back}")
         self.optimizer.step()
         num_correct = (pred.to(device=self.device) == y).sum()
+#         pred_cpu = pred.cpu().detach().numpy()
+
+
         # print(f"total correct is {num_correct} vs total which is {len(y)}")
         # ========================
 
         # Note: scaling num_correct by seq_len because each sample has seq_len
         # different predictions.
-        return BatchResult(loss.item(), num_correct.item())
+        return BatchResult(loss.item(), num_correct.item(),None,None)
 
     def test_batch(self, batch) -> BatchResult:
         x, y = batch
@@ -371,6 +385,9 @@ class AttentionTrainer(Trainer):
             loss = self.loss_fn(output, y)
             pred = torch.argmax(output, dim=-1).to(device=self.device)
             num_correct = (pred == y).sum()
+            pred_cpu = pred.cpu().detach().numpy()
+            actual_res = y.cpu().detach().numpy()
+#             print(f"actual res is {actual_res}")
         # ========================
 
-        return BatchResult(loss.item(), num_correct.item())
+        return BatchResult(loss.item(), num_correct.item(),pred_cpu,actual_res)
