@@ -3,7 +3,7 @@ import pickle
 from datetime import date
 import torch.optim as optim
 from sklearn.model_selection import KFold
-from ray.tune.examples.mnist_pytorch import get_data_loaders, ConvNet, train, test
+# from ray.tune.examples.mnist_pytorch import get_data_loaders, ConvNet, train, test
 import torch.optim as optim
 import torch
 import torchtext

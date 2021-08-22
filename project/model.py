@@ -20,7 +20,7 @@ class SimplePredictionModel(nn.Module):
                                       num_layers=num_layers, bidirectional=bidirectional, dropout=dropout)
         self.lstm_net.to(device)
         output_dim = hidden_dim * 2 if bidirectional else hidden_dim
-        self.output_layer = nn.Linear(output_dim, 3, bias=False)
+        self.output_layer = nn.Linear(output_dim, 5, bias=False)
         self.output_layer.to(device)
         self.log_softmax = nn.LogSoftmax(dim=1)
         self.log_softmax.to(device)
