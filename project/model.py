@@ -8,17 +8,22 @@ import torchtext.data
 import torchtext.datasets
 
 
+# noinspection PyAbstractClass
 class SimplePredictionModel(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True, device='cpu', dropout=0.1):
         super().__init__()
         self.embedding = embedding
+        self.embedding.to(device)
         self.num_layers = num_layers
 
         self.lstm_net = torch.nn.LSTM(batch_first=True, input_size=embedding_dim, hidden_size=hidden_dim,
                                       num_layers=num_layers, bidirectional=bidirectional, dropout=dropout)
+        self.lstm_net.to(device)
         output_dim = hidden_dim * 2 if bidirectional else hidden_dim
-        self.output_layer = nn.Linear(output_dim, 3, bias=False)
+        self.output_layer = nn.Linear(output_dim, 5, bias=False)
+        self.output_layer.to(device)
         self.log_softmax = nn.LogSoftmax(dim=1)
+        self.log_softmax.to(device)
         self.device = device
 
     def forward(self, x, hidden_state=None):
