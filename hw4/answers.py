@@ -4,7 +4,7 @@ Use this module to write your answers to the questions in the notebook.
 Note: Inside the answer strings you can use Markdown format and also LaTeX
 math (delimited with $$).
 """
-
+from itertools import product
 
 # ==============
 # Part 1 answers
@@ -39,16 +39,22 @@ def part1_aac_hyperparams():
     )
     # TODO: Tweak the hyperparameters. You can also add new ones if you need
     #   them for your model implementation.
+    
     # ====== YOUR CODE: ======
-    hp['batch_size'] = 8
-    hp['gamma'] = 0.99
-    hp['beta'] = 1
-    hp['delta'] = 1.0
-    hp['learn_rate'] = 1e-3
-    hp['eps'] = 1e-8
-    hp['num_workers'] = 0
+    hp['batch_size'] = [8,16,32]
+    hp['gamma'] = [0.99]
+    hp['critic_hidden_dims'] = [[256],[256,128],[256,128,64],[128,64]]
+    hp['beta'] = [1]
+    hp['delta'] = [1.0]
+    hp['learn_rate'] = [1e-2,5e-3,1e-3]
+    hp['eps'] = [1e-8]
+    hp['num_workers'] = [0]
+    keys, values = zip(*hp.items())
+    for bundle in product(*values):
+        d = dict(zip(keys, bundle))
+        yield d
     # ========================
-    return hp
+    return None
 
 
 part1_q1 = r"""

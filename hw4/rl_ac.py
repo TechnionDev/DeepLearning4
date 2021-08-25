@@ -27,14 +27,18 @@ class AACPolicyNet(nn.Module):
             nn.Linear(in_features=64, out_features=out_actions),
             nn.ReLU(),
         ]
+        critic_hidden_dims = kw['critic_hidden_dims']
         self.critic = [
-            nn.Linear(in_features=in_features, out_features=256),
-            nn.ReLU(),
-            nn.Linear(in_features=256, out_features=64),
-            nn.ReLU(),
-            nn.Linear(in_features=64, out_features=1),
+            nn.Linear(in_features=in_features, out_features=critic_hidden_dims[0]),
             nn.ReLU(),
         ]
+        for i,hidden_dim in enumerate(critic_hidden_dims):
+            if i == len(critic_hidden_dims)-1:
+                self.critic += [nn.Linear(in_features=critic_hidden_dims[i], out_features=1),
+                                nn.ReLU(),]
+            else:
+                self.critic += [nn.Linear(in_features=critic_hidden_dims[i], out_features=critic_hidden_dims[i+1]),
+                                nn.ReLU(),]
         self.actor = nn.Sequential(*self.actor)
         self.critic = nn.Sequential(*self.critic)
         # ========================
