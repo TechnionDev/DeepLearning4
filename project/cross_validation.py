@@ -2,19 +2,16 @@ import itertools
 import pickle
 from datetime import date
 import torch.optim as optim
-from sklearn.model_selection import KFold
-from ray.tune.examples.mnist_pytorch import get_data_loaders, ConvNet, train, test
-import torch.optim as optim
 import torch
 import torchtext
 import torch.nn as nn
 import project.model as model
 import project.self_attention_model as attn_model
-import numpy as np
-from project.config import lstm_hyper_params
 from project.HW3_additions.training import LSTMTrainer, AttentionTrainer
 import warnings
+
 warnings.filterwarnings('ignore')
+
 
 def hp_fitting(num_epochs=30):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -46,12 +43,13 @@ def hp_fitting(num_epochs=30):
             lr, dropout, layer_count = comb
             print(f'Running Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
-            learning_model = attn_model.AttentionModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, attention_layer_count=layer_count)
+            learning_model = attn_model.AttentionModel(embedding=embedding, embedding_dim=embedding.embedding_dim,
+                                                       dropout=dropout, attention_layer_count=layer_count)
             learning_model.to(device)
             optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
             trainer = AttentionTrainer(learning_model, loss_fn, optimizer, device)
-            results = trainer.fit(dl_train, dl_test, num_epochs)
+            results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=4)
 
             perf[(f'Attention_bs_{batch_size}', *comb)] = results
 
@@ -66,12 +64,13 @@ def hp_fitting(num_epochs=30):
             lr, dropout, layer_count, hidden_dim = comb
             print(f'Running LSTM with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
-            learning_model = model.SimplePredictionModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim)
+            learning_model = model.SimplePredictionModel(embedding=embedding, embedding_dim=embedding.embedding_dim,
+                                                         dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim)
             learning_model.to(device)
             optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
-            trainer = AttentionTrainer(learning_model, loss_fn, optimizer, device)
-            results = trainer.fit(dl_train, dl_test, num_epochs)
+            trainer = LSTMTrainer(learning_model, loss_fn, optimizer, device)
+            results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=4)
 
             perf[(f'LSTM_bs_{batch_size}', *comb)] = results
 
@@ -82,8 +81,9 @@ def hp_fitting(num_epochs=30):
     return perf
 
 
-perf = hp_fitting()
+if __name__ == '__main__':
+    perf = hp_fitting()
 
-today = date.today()
-with open(f'output_{today}.final', 'wb') as output_file:
-    pickle.dump(perf, output_file)
+    today = date.today()
+    with open(f'output_{today}.final', 'wb') as output_file:
+        pickle.dump(perf, output_file)
