@@ -91,7 +91,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
             hp_combinations = list(itertools.product(*hp))
             for comb in hp_combinations:
                 torch.manual_seed(seed)
-                lr, dropout, layer_count, hidden_dim = comb
+                lr, dropout, layer_count, _, hidden_dim = comb
                 print(f'Running LSTM with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
                 learning_model = model.LSTMModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim,
@@ -114,7 +114,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
 
 def main():
-    perf = hp_fitting(do_model='multihead')
+    perf = hp_fitting(do_model='lstm')
 
     today = date.today()
     with open(f'output_{today}.final', 'wb') as output_file:
