@@ -12,7 +12,7 @@ def get_max(filename):
             if a[k].max_test_acc > max_test_acc:
                 res = a[k]
                 res_k = k
-                print(f'Updating max_acc from {max_test_acc} to {a[k].max_test_acc} with config:\n{k}')
+#                print(f'Updating max_acc from {max_test_acc} to {a[k].max_test_acc} with config:\n{k}')
                 max_test_acc = a[k].max_test_acc
 
             # max_test_acc   = max(max_test_acc, a[k]['max_test_acc'])
