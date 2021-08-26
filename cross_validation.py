@@ -19,7 +19,7 @@ def save_to_file(perf, num_epochs, do_model, seed):
 
 
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
-    early_stopping = 8
+    early_stopping = 999
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
     print(f'Running on a {torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}')
@@ -87,11 +87,12 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 save_to_file(perf, num_epochs, do_model, seed)
 
         if do_model is None or do_model == 'lstm':
+            hp = hp[:-1]
             hp.append([100, 150, 200, 250])  # hidden dim
             hp_combinations = list(itertools.product(*hp))
             for comb in hp_combinations:
                 torch.manual_seed(seed)
-                lr, dropout, layer_count, _, hidden_dim = comb
+                lr, dropout, layer_count, hidden_dim = comb
                 print(f'Running LSTM with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
                 learning_model = model.LSTMModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim,
