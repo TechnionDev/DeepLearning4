@@ -13,6 +13,11 @@ import warnings
 warnings.filterwarnings('ignore')
 
 
+def save_to_file(perf, num_epochs, do_model, seed):
+    with open(f'{(do_model + "_") if do_model else ""}seed{seed}_ne{num_epochs}_output_{date.today()}.tmp', 'wb') as output_file:
+        pickle.dump(perf, output_file)
+
+
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
@@ -58,9 +63,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
                 perf[(f'Attention_bs_{batch_size}', *comb)] = results
 
-                today = date.today()
-                with open(f'output_{today}.tmp', 'wb') as output_file:
-                    pickle.dump(perf, output_file)
+                save_to_file(perf, num_epochs, do_model, seed)
 
         if do_model is None or do_model == 'multihead':
             # hp.append([])
@@ -80,9 +83,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
                 perf[(f'Attention_bs_{batch_size}', *comb)] = results
 
-                today = date.today()
-                with open(f'output_{today}.tmp', 'wb') as output_file:
-                    pickle.dump(perf, output_file)
+                save_to_file(perf, num_epochs, do_model, seed)
 
         if do_model is None or do_model == 'lstm':
             hp.append([100, 150, 200, 250])  # hidden dim
@@ -106,16 +107,18 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
                 perf[(f'LSTM_bs_{batch_size}', *comb)] = results
 
-                today = date.today()
-                with open(f'output_{today}.tmp', 'wb') as output_file:
-                    pickle.dump(perf, output_file)
+                save_to_file(perf, num_epochs, do_model, seed)
 
     return perf
 
 
-if __name__ == '__main__':
+def main():
     perf = hp_fitting(do_model='multihead')
 
     today = date.today()
     with open(f'output_{today}.final', 'wb') as output_file:
         pickle.dump(perf, output_file)
+
+
+if __name__ == '__main__':
+    main()
