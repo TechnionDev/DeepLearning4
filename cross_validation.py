@@ -19,7 +19,7 @@ def save_to_file(perf, num_epochs, do_model, seed):
 
 
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
-    early_stopping = 999
+    early_stopping = 99
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
     print(f'Running on a {torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}')
@@ -41,9 +41,9 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
         hp = [
             [0.1, 0.01, 0.007, 0.005, 0.001],  # lr
-            [0.9, 0.7, 0.5, 0.3],  # dropout
+            [0.9, 0.7, 0.5],  # dropout
             [3, 2, 4],  # layer count
-            [0.1, 0.5, 0.7, 0.9]  # pe dropout
+            [0.1, 0.5, 0.7]  # pe dropout
         ]
 
         hp_combinations = list(itertools.product(*hp))
@@ -67,15 +67,17 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 save_to_file(perf, num_epochs, do_model, seed)
 
         if do_model is None or do_model == 'multihead':
-            # hp.append([])
+            hp.append([2,4,8])  # num_heads
+            hp.append([True, False])
+            hp_combinations = list(itertools.product(*hp))
 
             for comb in hp_combinations:
                 torch.manual_seed(seed)
-                lr, dropout, layer_count, pe_dropout = comb
+                lr, dropout, layer_count, pe_dropout, num_heads, with_norm = comb
                 print(f'Running Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
                 learning_model = attn_model.MultiheadAttentionModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, attention_layer_count=layer_count,
-                                                                    pe_dropout=pe_dropout, with_norm=True, num_heads=2)
+                                                                    pe_dropout=pe_dropout, with_norm=with_norm, num_heads=num_heads)
                 learning_model.to(device)
                 optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
@@ -117,7 +119,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
 
 def main():
-    perf = hp_fitting(do_model='lstm')
+    perf = hp_fitting(do_model='multihead', num_epochs=20)
 
     today = date.today()
     with open(f'output_{today}.final', 'wb') as output_file:
