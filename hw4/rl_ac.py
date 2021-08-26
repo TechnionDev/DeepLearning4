@@ -19,28 +19,21 @@ class AACPolicyNet(nn.Module):
         #  Implement a dual-head neural net to approximate both the
         #  policy and value. You can have a common base part, or not.
         # ====== YOUR CODE: ======
-        self.actor = [
-            nn.Linear(in_features=in_features, out_features=256),
-            nn.ReLU(),
-            nn.Linear(in_features=256, out_features=64),
-            nn.ReLU(),
-            nn.Linear(in_features=64, out_features=out_actions),
-            nn.ReLU(),
-        ]
-        critic_hidden_dims = kw['critic_hidden_dims']
-        self.critic = [
-            nn.Linear(in_features=in_features, out_features=critic_hidden_dims[0]),
-            nn.ReLU(),
-        ]
-        for i,hidden_dim in enumerate(critic_hidden_dims):
-            if i == len(critic_hidden_dims)-1:
-                self.critic += [nn.Linear(in_features=critic_hidden_dims[i], out_features=1),
-                                nn.ReLU(),]
-            else:
-                self.critic += [nn.Linear(in_features=critic_hidden_dims[i], out_features=critic_hidden_dims[i+1]),
-                                nn.ReLU(),]
-        self.actor = nn.Sequential(*self.actor)
-        self.critic = nn.Sequential(*self.critic)
+        layer_size = 64
+        layers = [nn.Linear(in_features,layer_size),nn.ReLU()]
+        for _ in range(3):
+            layers += [nn.Linear(layer_size,layer_size),nn.ReLU()]
+        layers += [nn.Linear(layer_size,out_actions)]
+        self.actor = nn.Sequential(*layers)
+
+        # critic
+        layer_size = 64
+        layers = [nn.Linear(in_features, layer_size), nn.ReLU()]
+        for _ in range(3):
+            layers += [nn.Linear(layer_size, layer_size), nn.ReLU()]
+        layers += [nn.Linear(layer_size, 1)]
+        self.critic = nn.Sequential(*layers)
+        
         # ========================
 
     def forward(self, x):
@@ -72,6 +65,7 @@ class AACPolicyNet(nn.Module):
         # TODO: Implement according to docstring.
         # ====== YOUR CODE: ======
         net = AACPolicyNet(in_features=env.observation_space.shape[0], out_actions=env.action_space.n)
+        print(f"net: {net}")
         # ========================
         return net.to(device)
 
