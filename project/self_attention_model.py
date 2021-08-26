@@ -89,7 +89,7 @@ class MultiheadAttentionModel(nn.Module):
                 MultiheadSublayer(embedding_dim , num_heads=num_heads, dropout=dropout, with_norm=with_norm),
             ]
         self.layers = nn.Sequential(*self.layers)
-        self.fc_dropout = nn.Sequential(nn.Linear(embedding_dim * 2, output_dim, bias=False),nn.Dropout(p=dropout))
+        self.fc_dropout = nn.Sequential(nn.Linear(embedding_dim, output_dim, bias=False),nn.Dropout(p=dropout))
 
     def forward(self, x):
         out = self.layers(x)

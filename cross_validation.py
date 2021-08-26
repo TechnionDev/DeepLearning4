@@ -19,7 +19,7 @@ def save_to_file(perf, num_epochs, do_model, seed):
 
 
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
-    early_stopping = 99
+    early_stopping = 25
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
     print(f'Running on a {torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}')
@@ -40,7 +40,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
             shuffle=True, device=device)
 
         hp = [
-            [0.1, 0.01, 0.007, 0.005, 0.001],  # lr
+            [0.011, 0.012, 0.007, 0.005, 0.001],  # lr
             [0.9, 0.7, 0.5],  # dropout
             [3, 2, 4],  # layer count
             [0.1, 0.5, 0.7]  # pe dropout
@@ -69,8 +69,8 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 save_to_file(perf, num_epochs, do_model, seed)
 
         if do_model is None or do_model == 'multihead':
-            hp.append([2,4,8])  # num_heads
-            hp.append([True, False]) # with/without norm
+            hp.append([5,8])  # num_heads
+            hp.append([False]) # with/without norm
             hp_combinations = list(itertools.product(*hp))
 
             print(f'Num of combinations: {len(hp_combinations)}')
@@ -123,7 +123,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
 
 def main():
-    perf = hp_fitting(do_model='multihead', num_epochs=30)
+    perf = hp_fitting(do_model='multihead', num_epochs=40)
 
     today = date.today()
     with open(f'output_{today}.final', 'wb') as output_file:
