@@ -21,7 +21,7 @@ def get_max(filename):
             # min_train_loss = min(min_train_loss, a[k]['min_train_loss'])
 
         print(f'Results for {filename}:\n'
-              f'max_test_acc: {max_test_acc} | min_test_loss: {res["min_test_loss"]} | max_train_acc: {res["max_train_acc"]} | min_train_loss: {res["min_train_loss"]}')
+              f'max_test_acc: {max_test_acc} | min_test_loss: {res.min_test_loss} | max_train_acc: {res.max_train_acc} | min_train_loss: {res.min_train_loss}')
 
 
 
