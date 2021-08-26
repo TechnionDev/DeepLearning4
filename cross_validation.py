@@ -49,7 +49,9 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
         hp_combinations = list(itertools.product(*hp))
 
         if do_model is None or do_model == 'attention':
-            for comb in hp_combinations:
+            print(f'Num of combinations: {len(hp_combinations)}')
+            for i, comb in enumerate(hp_combinations):
+                print(f'Running combinations {i}/{len(hp_combinations)}')
                 torch.manual_seed(seed)
                 lr, dropout, layer_count, pe_dropout = comb
                 print(f'Running Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
@@ -68,10 +70,12 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
         if do_model is None or do_model == 'multihead':
             hp.append([2,4,8])  # num_heads
-            hp.append([True, False])
+            hp.append([True, False]) # with/without norm
             hp_combinations = list(itertools.product(*hp))
 
-            for comb in hp_combinations:
+            print(f'Num of combinations: {len(hp_combinations)}')
+            for i, comb in enumerate(hp_combinations):
+                print(f'Running combinations {i}/{len(hp_combinations)}')
                 torch.manual_seed(seed)
                 lr, dropout, layer_count, pe_dropout, num_heads, with_norm = comb
                 print(f'Running Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
