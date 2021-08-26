@@ -19,6 +19,7 @@ def save_to_file(perf, num_epochs, do_model, seed):
 
 
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
+    early_stopping = 6
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
     print(f'Running on a {torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}')
@@ -59,7 +60,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
                 trainer = AttentionTrainer(learning_model, loss_fn, optimizer, device)
-                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=3)
+                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=early_stopping)
 
                 perf[(f'Attention_bs_{batch_size}', *comb)] = results
 
@@ -79,7 +80,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
                 trainer = AttentionTrainer(learning_model, loss_fn, optimizer, device)
-                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=3)
+                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=early_stopping)
 
                 perf[(f'Attention_bs_{batch_size}', *comb)] = results
 
@@ -103,7 +104,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 
                 trainer = LSTMTrainer(learning_model, loss_fn, optimizer, device=device)
-                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=3)
+                results = trainer.fit(dl_train, dl_test, num_epochs, early_stopping=early_stopping)
 
                 perf[(f'LSTM_bs_{batch_size}', *comb)] = results
 
