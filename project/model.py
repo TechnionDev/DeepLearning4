@@ -9,7 +9,7 @@ import torchtext.datasets
 
 
 # noinspection PyAbstractClass
-class SimplePredictionModel(nn.Module):
+class LSTMModel(nn.Module):
     def __init__(self, embedding_dim, hidden_dim, num_layers, embedding, bidirectional=True, device='cpu', dropout=0.1):
         super().__init__()
         self.embedding = embedding

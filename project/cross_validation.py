@@ -64,8 +64,8 @@ def hp_fitting(num_epochs=30):
             lr, dropout, layer_count, hidden_dim = comb
             print(f'Running LSTM with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
-            learning_model = model.SimplePredictionModel(embedding=embedding, embedding_dim=embedding.embedding_dim,
-                                                         dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim)
+            learning_model = model.LSTMModel(embedding=embedding, embedding_dim=embedding.embedding_dim,
+                                             dropout=dropout, num_layers=layer_count, hidden_dim=hidden_dim)
             learning_model.to(device)
             optimizer = optim.Adam(learning_model.parameters(), lr=lr)
 

@@ -21,12 +21,14 @@ class MultiplicativeAttention(nn.Module):
         self.d_model = d_model
         self.d_k = d_k
         self.softmax = nn.Softmax(dim=-1)
+        self.last_dot_scores = None
 
     def forward(self, x):
         q = x @ self.wq
         k = x @ self.wk
         v = x @ self.wv
         dot_scores = q @ k.transpose(1, 2) / np.sqrt(self.d_k)
+        self.last_dot_scores = dot_scores
         return self.softmax(dot_scores) @ v
 
 
