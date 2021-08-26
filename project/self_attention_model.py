@@ -84,15 +84,15 @@ class MultiheadAttentionModel(nn.Module):
         ]
         for i in range(attention_layer_count - 1):
             self.layers += [
-                nn.Linear(embedding_dim * (1 if i == 0 else 2), embedding_dim * 2, bias=True),
+                nn.Linear(embedding_dim , embedding_dim , bias=True),
                 nn.ReLU(),
-                MultiheadSublayer(embedding_dim * 2, num_heads=num_heads, dropout=dropout, with_norm=with_norm),
+                MultiheadSublayer(embedding_dim , num_heads=num_heads, dropout=dropout, with_norm=with_norm),
             ]
         self.layers = nn.Sequential(*self.layers)
-        self.fc = nn.Linear(embedding_dim * 2, output_dim, bias=False)
+        self.fc_dropout = nn.Sequential(nn.Linear(embedding_dim * 2, output_dim, bias=False),nn.Dropout(p=dropout))
 
     def forward(self, x):
         out = self.layers(x)
         out = torch.mean(out, dim=1)
-        out = torch.nn.functional.log_softmax(self.fc(out), dim=-1)
+        out = torch.nn.functional.log_softmax(self.fc_dropout(out), dim=-1)
         return out

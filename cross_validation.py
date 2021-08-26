@@ -119,7 +119,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
 
 def main():
-    perf = hp_fitting(do_model='multihead', num_epochs=20)
+    perf = hp_fitting(do_model='multihead', num_epochs=30)
 
     today = date.today()
     with open(f'output_{today}.final', 'wb') as output_file:
