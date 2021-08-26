@@ -40,7 +40,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
             shuffle=True, device=device)
 
         hp = [
-            [0.1, 0.01, 0.007, 0.005, 0.001, 0.11, 0.12],  # lr
+            [0.1, 0.01, 0.007, 0.005, 0.001],  # lr
             [0.9, 0.7, 0.5, 0.3],  # dropout
             [3, 2, 4],  # layer count
             [0.1, 0.5, 0.7, 0.9]  # pe dropout
@@ -88,9 +88,11 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
 
         if do_model is None or do_model == 'lstm':
             hp = hp[:-1]
-            hp.append([100, 150, 200, 250])  # hidden dim
+            hp.append([150, 200, 250])  # hidden dim
             hp_combinations = list(itertools.product(*hp))
-            for comb in hp_combinations:
+            print(f'Num of combinations: {len(hp_combinations)}')
+            for i, comb in enumerate(hp_combinations):
+                print(f'Running combinations {i}/{len(hp_combinations)}')
                 torch.manual_seed(seed)
                 lr, dropout, layer_count, hidden_dim = comb
                 print(f'Running LSTM with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
