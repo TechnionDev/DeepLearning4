@@ -311,3 +311,8 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,python,pycharm,macos,linux
 cs236781/.DS_Store
 hw3/__pycache__/
+
+
+.vector_cache/
+.idea/
+*.orig
