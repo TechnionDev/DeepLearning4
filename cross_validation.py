@@ -19,7 +19,7 @@ def save_to_file(perf, num_epochs, do_model, seed):
 
 
 def hp_fitting(num_epochs=20, do_model=None, seed=679):
-    early_stopping = 6
+    early_stopping = 8
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     # device = 'cpu'
     print(f'Running on a {torch.cuda.get_device_name(0) if torch.cuda.is_available() else "cpu"}')
