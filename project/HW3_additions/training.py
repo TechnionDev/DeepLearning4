@@ -161,6 +161,7 @@ class Trainer(abc.ABC):
         :return: An EpochResult for the epoch.
         """
         self.model.train(False)  # set evaluation (test) mode
+        self.model.eval()
         return self._foreach_batch(dl_test, self.test_batch, **kw)
 
     @abc.abstractmethod
