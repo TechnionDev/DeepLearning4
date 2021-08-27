@@ -78,7 +78,7 @@ def hp_fitting(num_epochs=20, do_model=None, seed=679):
                 print(f'Running combinations {i}/{len(hp_combinations)}')
                 torch.manual_seed(seed)
                 lr, dropout, layer_count, pe_dropout, num_heads, with_norm = comb
-                print(f'Running Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
+                print(f'Running Multihead Attention with batch_size={batch_size} lr={lr} dropout={dropout} layer_count={layer_count}')
 
                 learning_model = attn_model.MultiheadAttentionModel(embedding=embedding, embedding_dim=embedding.embedding_dim, dropout=dropout, attention_layer_count=layer_count,
                                                                     pe_dropout=pe_dropout, with_norm=with_norm, num_heads=num_heads)
