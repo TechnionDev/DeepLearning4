@@ -61,7 +61,8 @@ def load_data():
     ds_train, ds_valid, ds_test = torchtext.datasets.SST.splits(
         review_parser, label_parser, root="project/data", fine_grained=True
     )
-    review_parser.build_vocab(ds_train, vectors="glove.6B.200d")
+    vocab = review_parser.build_vocab(ds_train, vectors="glove.6B.300d")
     label_parser.build_vocab(ds_train)
+    
     # print(f"review parser dict is {review_parser.vocab.vectors}")
-    return ds_train, ds_valid, ds_test, review_parser.vocab.vectors
+    return ds_train, ds_valid, ds_test, review_parser.vocab.vectors,review_parser,label_parser, vocab

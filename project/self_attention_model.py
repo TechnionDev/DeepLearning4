@@ -34,17 +34,18 @@ class AttentionModel(nn.Module):
         self.layers = [
             embedding,
             attention.PositionalEncoding(embedding_dim, dropout=pe_dropout),
-            Sublayer(embedding_dim, embedding_dim * 2),
+            Sublayer(embedding_dim, embedding_dim*2),
         ]
         for i in range(attention_layer_count - 1):
             self.layers += [
-                nn.Linear(embedding_dim * 2, embedding_dim * 2, bias=True),
+                nn.Linear(embedding_dim*2, embedding_dim*2, bias=False),
                 nn.ReLU(),
                 nn.Dropout(p=dropout),
-                Sublayer(embedding_dim * 2, embedding_dim * 2),
+                Sublayer(embedding_dim*2, embedding_dim*2),
             ]
+        # self.layers += [nn.Linear(embedding_dim*2, embedding_dim*2, bias=False)]
         self.layers = nn.Sequential(*self.layers)
-        self.fc = nn.Linear(embedding_dim * 2, output_dim, bias=False)
+        self.fc = nn.Linear(embedding_dim*2, output_dim, bias=False)
 
     def forward(self, x):
         out = self.layers(x)
@@ -54,7 +55,7 @@ class AttentionModel(nn.Module):
 
     @property
     def last_dot_scores(self):
-        return self.layers[2].last_dot_scores
+        return self.layers[6].last_dot_scores
 
 
 # noinspection PyAbstractClass
@@ -84,15 +85,15 @@ class MultiheadAttentionModel(nn.Module):
         ]
         for i in range(attention_layer_count - 1):
             self.layers += [
-                nn.Linear(embedding_dim , embedding_dim , bias=True),
+                nn.Linear(embedding_dim , embedding_dim * 2, bias=True),
                 nn.ReLU(),
                 MultiheadSublayer(embedding_dim , num_heads=num_heads, dropout=dropout, with_norm=with_norm),
             ]
         self.layers = nn.Sequential(*self.layers)
-        self.fc_dropout = nn.Sequential(nn.Linear(embedding_dim * 2, output_dim, bias=False),nn.Dropout(p=dropout))
+        self.fc = nn.Linear(embedding_dim, output_dim, bias=False)
 
     def forward(self, x):
         out = self.layers(x)
         out = torch.mean(out, dim=1)
-        out = torch.nn.functional.log_softmax(self.fc_dropout(out), dim=-1)
+        out = torch.nn.functional.log_softmax(self.fc(out), dim=-1)
         return out

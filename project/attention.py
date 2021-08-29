@@ -30,6 +30,10 @@ class MultiplicativeAttention(nn.Module):
         dot_scores = q @ k.transpose(1, 2) / np.sqrt(self.d_k)
         self.last_dot_scores = dot_scores
         return self.softmax(dot_scores) @ v
+    @property
+    def get_last_dot_scores(self):
+        print(f"last dot scores are {self.last_dot_scores}")
+        return self.last_dot_scores
 
 
 class PositionalEncoding(nn.Module, ABC):
