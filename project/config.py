@@ -1,12 +1,18 @@
-from ray import tune
-
-
 lstm_hyper_params = dict(
-    num_layers=4,
-    hidden_dim=150,
-    batch_size=32,
-#     lr=0.001,
-    factor=0.1,
-    patience=0.1,
-    mode='max',
+    num_layers=2,
+    lr = 0.0003,
+    num_epochs = 70,
+    bidirectional = False,
+    dropout = 0.7,
+    hidden_dim=100,
+    batch_size=64,
+)
+
+self_attention_params = dict(
+    num_layers = 2,
+    lr = 0.0001,
+    batch_size = 64,
+    num_epochs = 70,
+    dropout = 0.7,
+    pe_dropout = 0.1
 )
